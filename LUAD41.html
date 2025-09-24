@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Prognostic Model for Lung Adenocarcinoma</title>
+		<link rel="icon" href="lungicon.ico" />
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
+		<style type="text/css">
+			#title{
+				background-color: #0B1746;
+				margin-left: 8%;
+				margin-right: 8%;
+				color:white;
+				font-size: 26px;
+				box-sizing: border-box;
+				min-height: 100%;
+				}
+			.left {
+			  float: left;
+			  width: 38%;
+			  margin-left: 8%;
+			 /* background-color: gray; */
+				}
+			.right {
+			  margin-left: 54%;
+			  margin-right: 8%;
+			  margin-top: 40px;
+			  width: 38%;
+			/* background-color: lightgray; */
+			  	}
+			.input{
+				width: 150px;
+				height: 30px;
+				border: 1px solid #000000;
+				border-radius: 5px;
+				color: black;
+				font-size: 15px;
+				font-weight: bold;
+				background-color: #f8f3ee;
+				text-indent: 5px;
+				}
+			.rslt{
+				width: 120px;
+				height: 30px;
+				border: 1px solid #000000;
+				border-radius: 5px;
+				color: black;
+				font-size: 20px;
+				font-weight: bold;
+				background-color: #ffffff;
+				text-indent: 5px;
+			}
+			#footer{
+				margin-bottom: 20%;
+				text-align: center;
+				}
+			.btn{
+				background-color:#3c7dde;
+				color:white;
+				width: 50px;
+				height: 30px;
+				border:0;
+				font-size: 16px;
+				box-sizing: content-box;
+				border-radius: 5px;
+			}
+			.btn:hover{
+				background-color:#309be2;
+			}
+			button{
+				background-color:#3c7dde;
+				color:white;
+				width: 50px;
+				height: 30px;
+				border:0;
+				font-size: 16px;
+				box-sizing: content-box;
+				border-radius: 5px;
+				}
+			 button:hover{
+				background-color:#309be2;
+				}
+			a:link,:visited{
+				text-decoration: none;
+				color: white;
+				}
+			.result-value {
+			            font-weight: bold;
+			            padding: 5px 10px;
+			            border-radius: 5px;
+			        }
+			
+			.high-risk { background-color: #ffebee; color: #c62828; }
+			.medium-risk { background-color: #fff3e0; color: #ef6c00; }
+			.low-risk { background-color: #e8f5e8; color: #2e7d32; }
+		</style>
+	</head>
+	<body>
+		<!-- 以下针对网页头部 -->
+		<div id="title">
+			<h1 style="text-align: center;display:block;">&nbsp;肺腺癌临床预后预测模型</h1>
+		</div>
+		<!-- 以下为网页主体 -->
+		<div class="box">
+			<!-- 以下为左边Introduction -->
+		    <div class="left">
+				<hr style="background-color: #de4b49;height: 3px;border: none;"/>
+				<p><h3 style="font-size: 26px;">介绍</h3></p>
+				<span style="line-height: 30px;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;肺癌是最常见的恶性肿瘤之一，肺腺癌作为其中最常见的亚型，严重危害人类的健康。常规的手术、放射治疗、药物治疗已经无法满足部分患者的需求，免疫治疗逐渐成为热点。在肿瘤组织中发现了一个由肿瘤浸润淋巴细胞TIL构成的异位淋巴聚集体，即三级淋巴结构，有望作为预测免疫治疗反应的监测因子。 
+<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;在此网站，我们将在解析肺腺癌患者肿瘤不同区域的TLS和TIL分布特征与探究TLS和TIL与患者临床特征及预后的相关性的基础上构建肺腺癌预后预测模型，为肺腺癌患者的精准治疗及预后评估提供新的思路和方向。</span>
+			</div>
+			<!-- 以下为右边输入框 -->
+		    <div class="right">
+				<form action="#" method="post" name="myform" id="myform">
+					<p>	<h3 style="font-size: 26px;">预后模型</h3></p>
+					<p><b>CEA :&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><input class="input" type="text" name="Factor1" autocomplete="off"/></p>
+					<p><b>性别 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</b><input type="radio" name="gender" value="1" style="font-size: 15px;" onclick="setf3(this.value)"/><b>男</b>
+					<input type="radio" name="gender" value="2" style="font-size: 15px;" onclick="setf3(this.value)"/><b>女</b></p>
+					<p><b>IT区TLS密度 <img src="i.png" title="肿瘤区中TLS的密度(个/mm²)"> : </b><input class="input" type="text" name="Factor4" autocomplete="off"/></p>
+					<div style="text-align:center"><input class="btn" type="button" value="运行" onclick="predict()"/>&nbsp;&nbsp;&nbsp;&nbsp;<input class="btn" type="reset" value="重置"/></div>
+					<p><b> 1 年生存率 : </b><input class="result-value" name="Result1" type="text" autocomplete="off"/></p>
+					<p><b> 2 年生存率 : </b><input class="result-value" name="Result2" type="text" autocomplete="off"/></p>
+					<p><b> 3 年生存率 : </b><input class="result-value" name="Result3" type="text" autocomplete="off"/></p>
+				</form>
+			</div>
+		</div>
+		<!-- 以下为计算代码 -->
+<script>
+// 从R模型获取的基准生存率
+const base_surv_12 = 0.9790279; // 12个月基准生存率
+const base_surv_24 = 0.9483896; // 24个月基准生存率  
+const base_surv_36 = 0.8966305; // 36个月基准生存率
+
+// 从R模型获取的系数
+const coef_tls_low = 2.1309;    // TLS密度Low组系数（参考：High组）
+const coef_cea_low = -1.2817;   // CEA Low组系数（参考：High组）
+const coef_gender_female = 1.9083; // 女性系数（参考：男性）
+
+function setf3(gender) {
+    f3 = parseInt(gender);
+    console.log('f3 的值为：' + f3);
+}
+
+function predict(){
+    // 获取输入值
+    var cea = parseFloat(document.myform.Factor1.value);
+    var tls_density = parseFloat(document.myform.Factor4.value);
+    
+    // 获取选中的性别值
+    var gender_radio = document.querySelector('input[name="gender"]:checked');
+    if(!gender_radio) {
+        alert("请选择性别！");
+        return;
+    }
+    var gender = parseInt(gender_radio.value);
+    
+    // 验证输入
+    if(isNaN(cea) || isNaN(tls_density)) {
+        alert("请填写完整的数据！");
+        return;
+    }
+    
+    // 根据临界值分组
+    var tls_group = tls_density <= 0.08352425 ? "Low" : "High";
+    var cea_group = cea <= 5 ? "Low" : "High";
+    
+    // 计算线性预测值 (LP) - 以保护因素为参考
+    var lp = 0;
+    
+    // TLS密度：Low组风险更高（High组是保护因素）
+    if(tls_group === "Low") {
+        lp += coef_tls_low;
+    }
+    
+    // CEA：High组风险更高（Low组是保护因素）
+    if(cea_group === "High") {
+        lp -= coef_cea_low; // 注意这里是减去，因为CEA Low是负系数
+    }
+    
+    // 性别：女性风险更高（男性是保护因素）
+    if(gender === 2) { // 女性
+        lp += coef_gender_female;
+    }
+    
+    // 计算生存概率：S(t) = S0(t)^exp(LP)
+  var exp_lp = Math.exp(lp);
+  var surv_12 = Math.pow(base_surv_12, exp_lp);
+  var surv_24 = Math.pow(base_surv_24, exp_lp);
+  var surv_36 = Math.pow(base_surv_36, exp_lp);
+  
+  // 先计算百分比值
+  var surv_12_percent = surv_12 * 100;
+  var surv_24_percent = surv_24 * 100;
+  var surv_36_percent = surv_36 * 100;
+  
+  function setRiskClass(element, value) {
+      element.className = 'result-value';
+      if (value >= 70) {
+          element.classList.add('low-risk');
+      } else if (value >= 30) {
+          element.classList.add('medium-risk');
+      } else {
+          element.classList.add('high-risk');
+      }
+  }
+  
+  // 转换为百分比格式（保留1位小数）
+  document.myform.Result1.value = surv_12_percent.toFixed(1) + "%";
+  document.myform.Result2.value = surv_24_percent.toFixed(1) + "%";
+  document.myform.Result3.value = surv_36_percent.toFixed(1) + "%";
+  
+  // 设置风险等级颜色
+  setRiskClass(document.myform.Result1, surv_12_percent);
+  setRiskClass(document.myform.Result2, surv_24_percent);
+  setRiskClass(document.myform.Result3, surv_36_percent);
+    // 在控制台输出详细计算过程（用于调试）
+    console.log('输入值 - CEA:', cea, 'TLS密度:', tls_density, '性别:', gender);
+    console.log('分组 - CEA:', cea_group, 'TLS:', tls_group);
+    console.log('线性预测值 (LP):', lp, 'exp(LP):', exp_lp);
+    console.log('生存概率 - 1年:', surv_12, '2年:', surv_24, '3年:', surv_36);
+}
+</script>
+		<!-- 以下为页尾 -->
+			<div id="footer">
+		    <div style="text-align: center; margin-top: 40px; padding-top: 20px; font-size: 16px; color: #000000; border-top: 1px solid #eee;">
+		        <p>注：本预测结果基于统计模型计算，仅供参考。实际临床决策请结合患者具体情况和医生专业判断。</p>
+		    </div>
+		</div>
+		  
+	</body>
+</html>
